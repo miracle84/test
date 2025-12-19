@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <style>
+    :root {
+      --accent: #2563eb;
+      --bg: #f8fafc;
+      --grid: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #e0f2fe, #f8fafc 45%);
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      color: #0f172a;
+    }
+
+    .panel {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      width: 380px;
+      max-width: calc(100vw - 32px);
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 24px;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: #475569;
+    }
+
+    .status {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #eef2ff;
+      color: #4338ca;
+      font-weight: 600;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 12px 0 16px;
+    }
+
+    button.cell {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border: 2px solid var(--grid);
+      border-radius: 12px;
+      background: var(--bg);
+      font-size: 32px;
+      font-weight: 700;
+      color: #0f172a;
+      transition: all 160ms ease;
+      cursor: pointer;
+    }
+
+    button.cell:hover {
+      background: white;
+      border-color: var(--accent);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.12);
+    }
+
+    button.cell:disabled {
+      cursor: default;
+      background: #f1f5f9;
+      color: #94a3b8;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    button.primary, button.ghost {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 140ms ease, box-shadow 140ms ease;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #2563eb, #60a5fa);
+      color: white;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+    }
+
+    button.primary:hover { box-shadow: 0 10px 22px rgba(37, 99, 235, 0.28); }
+    button.primary:active { transform: translateY(1px); }
+
+    button.ghost { background: #e2e8f0; color: #0f172a; }
+    button.ghost:hover { background: #cbd5e1; }
+
+    .footer {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #94a3b8;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="panel" aria-live="polite">
+    <h1>Tic Tac Toe</h1>
+    <p>Play a quick game of X and O. First to line up three wins.</p>
+    <div class="status" id="status">X begins. Tap any square.</div>
+
+    <div class="board" id="board" role="grid" aria-label="Tic Tac Toe board"></div>
+
+    <div class="actions">
+      <button class="ghost" id="swap">Swap Starter</button>
+      <button class="primary" id="reset">New Game</button>
+    </div>
+    <div class="footer">Single-page version</div>
+  </div>
+
+  <script>
+    const boardEl = document.getElementById('board');
+    const statusEl = document.getElementById('status');
+    const resetBtn = document.getElementById('reset');
+    const swapBtn = document.getElementById('swap');
+
+    let currentPlayer = 'X';
+    let board = Array(9).fill(null);
+    let gameOver = false;
+
+    const lines = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ];
+
+    function renderBoard() {
+      boardEl.innerHTML = '';
+      board.forEach((mark, index) => {
+        const button = document.createElement('button');
+        button.className = 'cell';
+        button.setAttribute('role', 'gridcell');
+        button.setAttribute('aria-label', `Cell ${index + 1}`);
+        button.textContent = mark ?? '';
+        button.disabled = Boolean(mark) || gameOver;
+        button.addEventListener('click', () => handleMove(index));
+        boardEl.appendChild(button);
+      });
+    }
+
+    function handleMove(index) {
+      if (gameOver || board[index]) return;
+      board[index] = currentPlayer;
+      const winner = checkWinner();
+
+      if (winner) {
+        gameOver = true;
+        statusEl.textContent = `${winner} wins!`;
+      } else if (board.every(Boolean)) {
+        gameOver = true;
+        statusEl.textContent = 'Draw game. Try again!';
+      } else {
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        statusEl.textContent = `${currentPlayer}'s turn.`;
+      }
+      renderBoard();
+    }
+
+    function checkWinner() {
+      for (const [a, b, c] of lines) {
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          return board[a];
+        }
+      }
+      return null;
+    }
+
+    function resetGame() {
+      board = Array(9).fill(null);
+      gameOver = false;
+      currentPlayer = 'X';
+      statusEl.textContent = `${currentPlayer} begins. Tap any square.`;
+      renderBoard();
+    }
+
+    function swapStarter() {
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      board = Array(9).fill(null);
+      gameOver = false;
+      statusEl.textContent = `${currentPlayer} begins. Tap any square.`;
+      renderBoard();
+    }
+
+    resetBtn.addEventListener('click', resetGame);
+    swapBtn.addEventListener('click', swapStarter);
+
+    renderBoard();
+  </script>
+</body>
+</html>
